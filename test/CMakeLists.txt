@@ -12,3 +12,5 @@ target_include_directories(thread_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
 )
 add_test(NAME thread_test COMMAND thread_test)
+target_compile_options(thread_test PRIVATE -fsanitize=address)
+target_link_options(thread_test PRIVATE -fsanitize=address)

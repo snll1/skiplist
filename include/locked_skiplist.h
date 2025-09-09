@@ -23,17 +23,20 @@ THE SOFTWARE.
 #pragma once
 
 #include <unordered_set>
-
+#include <memory>
 #include "skiplist.h"
 
 namespace skiplist {
 template <typename K, typename V>
 class LockedSkipList : public SkipList<K, V> {
    private:
+    struct Node;
+    using NodePtr = std::shared_ptr<Node>;
     struct Node {
+
         K key;
         V value;
-        std::vector<Node*> forward;
+        std::vector<NodePtr> forward;
         std::atomic<bool> marked = {false};
         std::atomic<bool> fully_linked = {false};
         int node_level = 0;
@@ -50,26 +53,17 @@ class LockedSkipList : public SkipList<K, V> {
 
    public:
     LockedSkipList(int max_level = 16, double prob = 0.5) : max_level_(max_level), probability_(prob), gen_(rd_()) {
-        header_ = new Node(K(), V(), max_level_);
-        tail_ = new Node(K(), V(), 0);
+        header_ = std::make_shared<Node>(K(), V(), max_level_);
+        tail_ = std::make_shared<Node>(K(), V(), 0);
         for (int i = 0; i <= max_level_; ++i) {
             header_->forward[i] = tail_;
         }
     }
 
-    ~LockedSkipList() {
-        auto curr = header_->forward[0];
-        while (curr != tail_) {
-            auto tmp = curr;
-            curr = curr->forward[0];
-            delete tmp;
-        }
-        delete header_;
-        delete tail_;
-    }
+    ~LockedSkipList() = default;
 
     std::pair<bool, V> search(const K& key) const override {
-        std::vector<Node*> preds(max_level_ + 1), succs(max_level_ + 1);
+        std::vector<NodePtr> preds(max_level_ + 1), succs(max_level_ + 1);
         auto found_level = find(key, preds, succs);
         if (found_level != -1) {
             auto node = succs[found_level];
@@ -81,7 +75,7 @@ class LockedSkipList : public SkipList<K, V> {
         return {false, V{}};
     }
 
-    int find(const K& key, std::vector<Node*>& preds, std::vector<Node*>& succs) const {
+    int find(const K& key, std::vector<NodePtr>& preds, std::vector<NodePtr>& succs) const {
         auto pred = header_;
         int found = -1;
         for (int level = max_level_; level >= 0; level--) {
@@ -103,7 +97,7 @@ class LockedSkipList : public SkipList<K, V> {
 
     bool insert(const K& key, const V& value) override {
         int node_level = get_rand_level();
-        std::vector<Node*> preds(max_level_ + 1), succs(max_level_ + 1);
+        std::vector<NodePtr> preds(max_level_ + 1), succs(max_level_ + 1);
         while (true) {
             int found_level = find(key, preds, succs);
             if (found_level != -1) {
@@ -119,7 +113,7 @@ class LockedSkipList : public SkipList<K, V> {
             }
 
             bool valid = true;
-            std::unordered_set<Node*> locked_nodes;
+            std::unordered_set<NodePtr> locked_nodes;
             for (int level = 0; level <= node_level; level++) {
                 auto pred = preds[level];
                 auto succ = succs[level];
@@ -142,7 +136,7 @@ class LockedSkipList : public SkipList<K, V> {
                 continue;
             }
 
-            auto new_node = new Node(key, value, node_level);
+            auto new_node = std::make_shared<Node>(key, value, node_level);
             for (int level = 0; level <= node_level; level++) {
                 new_node->forward[level] = succs[level];
                 preds[level]->forward[level] = new_node;
@@ -158,8 +152,8 @@ class LockedSkipList : public SkipList<K, V> {
     }
 
     bool remove(const K& key) override {
-        std::vector<Node*> preds(max_level_ + 1), succs(max_level_ + 1);
-        Node* victim = nullptr;
+        std::vector<NodePtr> preds(max_level_ + 1), succs(max_level_ + 1);
+        NodePtr victim = nullptr;
         bool is_marked = false;
         int node_level = -1;
         while (true) {
@@ -183,7 +177,7 @@ class LockedSkipList : public SkipList<K, V> {
                     is_marked = true;
                 }
 
-                std::unordered_set<Node*> locked_nodes;
+                std::unordered_set<NodePtr> locked_nodes;
                 bool valid = true;
                 for (int level = 0; level <= node_level; level++) {
                     auto pred = preds[level];
@@ -209,7 +203,6 @@ class LockedSkipList : public SkipList<K, V> {
                 }
 
                 victim->unlock();
-                delete victim;
 
                 for (auto& node : locked_nodes) {
                     node->unlock();
@@ -258,8 +251,8 @@ class LockedSkipList : public SkipList<K, V> {
    private:
     int max_level_;
     double probability_;
-    Node* header_;
-    Node* tail_;
+    NodePtr header_;
+    NodePtr tail_;
     std::random_device rd_;
     std::mt19937 gen_;
 };

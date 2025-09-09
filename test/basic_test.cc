@@ -9,7 +9,7 @@
 using namespace skiplist;
 using namespace std;
 
-void test_basic_operations(SkipList<int, std::string>& list) {
+void test_basic_operations(SkipList< int, std::string >& list) {
     // Test 1: Insert and Search
     assert(list.insert(10, "ten"));
     assert(list.insert(20, "twenty"));
@@ -29,7 +29,7 @@ void test_basic_operations(SkipList<int, std::string>& list) {
 
     // Test 3: Remove
     assert(list.remove(10));
-    assert(!list.search(10).first);  // Should be gone
+    assert(!list.search(10).first); // Should be gone
 
     // Test 4: Remove non-existent element
     assert(!list.remove(10));
@@ -37,13 +37,13 @@ void test_basic_operations(SkipList<int, std::string>& list) {
     std::cout << "Basic functionality tests passed." << std::endl;
 }
 
-void test_edge_cases(SkipList<int, std::string>& list) {
+void test_edge_cases(SkipList< int, std::string >& list) {
     // Test 1: Insert duplicates
     assert(list.insert(100, "100"));
-    assert(!list.insert(100, "101"));  // Should fail
+    assert(!list.insert(100, "101")); // Should fail
 
     // Test 2: Insert/Remove from empty list
-    LockedSkipList<int, int> empty_list;
+    LockedSkipList< int, int > empty_list;
     assert(!empty_list.remove(50));
     assert(!empty_list.search(50).first);
 
@@ -58,15 +58,15 @@ void test_edge_cases(SkipList<int, std::string>& list) {
     std::cout << "Edge case tests passed." << std::endl;
 }
 
-void test_sorted_after_large_inserts(SkipList<int, std::string>& list) {
-    const int num_inserts = 100;
-    std::vector<int> random_keys(num_inserts);
+void test_sorted_after_large_inserts(SkipList< int, std::string >& list) {
+    const int num_inserts = 10000;
+    std::vector< int > random_keys(num_inserts);
     std::random_device rd;
     std::mt19937 gen(rd());
 
     // Generate a list of unique random keys
     for (int i = 0; i < num_inserts; ++i) {
-        random_keys[i] = gen() % 20000;  // Random keys within a range
+        random_keys[i] = gen() % 20000; // Random keys within a range
     }
 
     // Insert all keys into the list
@@ -85,21 +85,21 @@ void test_sorted_after_large_inserts(SkipList<int, std::string>& list) {
 }
 
 void fatskiplist_test() {
-    FatSkipList<int, std::string> list;
+    FatSkipList< int, std::string > list;
     test_basic_operations(list);
     test_edge_cases(list);
     test_sorted_after_large_inserts(list);
 }
 
 void locked_skiplist_test() {
-    LockedSkipList<int, std::string> list;
+    LockedSkipList< int, std::string > list;
     test_basic_operations(list);
     test_edge_cases(list);
     test_sorted_after_large_inserts(list);
 }
 
 int main() {
-    srand(static_cast<unsigned int>(time(nullptr)));
+    srand(static_cast< unsigned int >(time(nullptr)));
     fatskiplist_test();
     locked_skiplist_test();
     return 0;
