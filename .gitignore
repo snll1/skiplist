@@ -1,0 +1,33 @@
+# Ignore compiled output files
+*.log
+*.tmp
+*.bak
+*.obj
+*.exe
+*.dll
+*.so
+
+# Ignore build directories and temporary files
+build/
+dist/
+node_modules/
+vendor/
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Ignore sensitive information
+.env
+config/secrets.yml
+*.pem
+
+# Ignore logs and database files
+logs/
+*.sqlite3
+*.db
+
+# Ignore editor-specific temporary files
+*~
+#*#
+.#*
